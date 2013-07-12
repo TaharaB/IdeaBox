@@ -1,27 +1,44 @@
 require './idea'
-
-
-
+require 'sinatra/reloader'
+require 'bundler'
+Bundler.require
 
 class IdeaBoxApp < Sinatra::Base
- get '/' do
-  erb :index, locals: {ideas: Idea.all}
+	set :method_override, true
+	configure :development do 
+		register Sinatra::Reloader
+	end
+
+	get '/:id/edit' do |id|
+  idea = Idea.find(id.to_i)
+  erb :edit, locals: {id: id, idea: idea}
 end
-  not_found do
-    erb :error
-  end
-   # ...
 
-
-	post '/' do
-  idea = Idea.new(params['idea_title'], params['idea_description'])
-  idea.save
+put '/:id' do |id|
+  data = {
+    :title => params['idea_title'],
+    :description => params['idea_description']
+  }
+  Idea.update(id.to_i, data)
   redirect '/'
 end
 
-
+	delete '/:id' do |id|
+  Idea.delete(id.to_i)
+  redirect '/'
 end
 
+	post '/' do
+		idea = Idea.new(params['idea_title'], params['idea_description'])
+		idea.save
+		redirect '/'
+	end
 
+	get '/' do
+		erb :index, locals: {ideas: Idea.all}
+	end
 
-
+	not_found do
+		erb :error
+	end
+end
